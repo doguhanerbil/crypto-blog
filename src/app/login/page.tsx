@@ -1,6 +1,10 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("");
@@ -25,8 +29,8 @@ export default function LoginPage() {
       if (!res.ok) throw new Error(data.error?.message || "Giriş başarısız");
       // JWT'yi localStorage'a kaydet
       localStorage.setItem("strapi_jwt", data.jwt);
-      // Dashboard'a yönlendir
-      router.push("/dashboard");
+      // Panel'e yönlendir
+      router.push("/panel");
     } catch (err: any) {
       setError(err.message || "Giriş başarısız");
     }
@@ -34,33 +38,34 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="max-w-sm mx-auto py-20">
-      <h1 className="text-2xl font-bold mb-6">Admin Giriş</h1>
-      <form onSubmit={handleLogin} className="space-y-4">
-        <input
-          className="border px-3 py-2 w-full"
-          placeholder="E-posta veya kullanıcı adı"
-          value={identifier}
-          onChange={e => setIdentifier(e.target.value)}
-          required
-        />
-        <input
-          className="border px-3 py-2 w-full"
-          type="password"
-          placeholder="Şifre"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-        />
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded w-full"
-          disabled={loading}
-        >
-          {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
-        </button>
-        {error && <div className="text-red-600 mt-2">{error}</div>}
-      </form>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-100">
+      <Card className="w-full max-w-sm shadow-xl border-0">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center text-blue-700">CryptoBlog Admin Giriş</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <Input
+              placeholder="E-posta veya kullanıcı adı"
+              value={identifier}
+              onChange={e => setIdentifier(e.target.value)}
+              required
+              autoFocus
+            />
+            <Input
+              type="password"
+              placeholder="Şifre"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+            />
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
+            </Button>
+            {error && <Alert variant="destructive">{error}</Alert>}
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 } 

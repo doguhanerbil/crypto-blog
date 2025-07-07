@@ -32,6 +32,7 @@ export default function DashboardPage() {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const router = useRouter();
 
   const API_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
@@ -83,6 +84,7 @@ export default function DashboardPage() {
     setError(null);
     try {
       let coverImageId = null;
+      let mediaIds: number[] = [];
       if (imageFile) {
         const formData = new FormData();
         formData.append("files", imageFile);
@@ -93,6 +95,17 @@ export default function DashboardPage() {
         });
         const uploadData = await uploadRes.json();
         coverImageId = uploadData[0]?.id;
+      }
+      if (mediaFiles.length > 0) {
+        const formData = new FormData();
+        mediaFiles.forEach(file => formData.append("files", file));
+        const uploadRes = await fetch(`${API_URL}/api/upload`, {
+          method: "POST",
+          headers: jwt ? { Authorization: `Bearer ${jwt}` } : {},
+          body: formData,
+        });
+        const uploadData = await uploadRes.json();
+        mediaIds = uploadData.map((item: any) => item.id);
       }
       const res = await fetch(`${API_URL}/api/posts`, {
         method: "POST",
@@ -108,6 +121,7 @@ export default function DashboardPage() {
             category: selectedCategory,
             tags: selectedTags,
             coverImage: coverImageId,
+            media: mediaIds,
           },
         }),
       });
@@ -117,6 +131,7 @@ export default function DashboardPage() {
       setSelectedCategory(null);
       setSelectedTags([]);
       setImageFile(null);
+      setMediaFiles([]);
       fetchPosts();
     } catch (err) {
       setError("Post eklenemedi.");
@@ -155,71 +170,99 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold">Yönetim Paneli</h1>
         <button onClick={handleLogout} className="text-red-600 underline">Çıkış Yap</button>
       </div>
-      <form onSubmit={handleAddPost} className="mb-8 space-y-2">
-        <input
-          className="border px-3 py-2 w-full"
-          placeholder="Başlık"
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          required
-        />
-        <textarea
-          className="border px-3 py-2 w-full"
-          placeholder="İçerik"
-          value={content}
-          onChange={e => setContent(e.target.value)}
-          required
-        />
-        <select
-          className="border px-3 py-2 w-full"
-          value={selectedCategory ?? ""}
-          onChange={e => setSelectedCategory(Number(e.target.value) || null)}
-          required
-        >
-          <option value="">Kategori Seç</option>
-          {categories.map(cat => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
-          ))}
-        </select>
-        <select
-          className="border px-3 py-2 w-full"
-          multiple
-          value={selectedTags.map(String)}
-          onChange={e => {
-            const options = Array.from(e.target.selectedOptions).map(opt => Number(opt.value));
-            setSelectedTags(options);
-          }}
-        >
-          {tags.map(tag => (
-            <option key={tag.id} value={tag.id}>{tag.name}</option>
-          ))}
-        </select>
-        <input
-          type="file"
-          accept="image/*"
-          className="border px-3 py-2 w-full"
-          onChange={e => setImageFile(e.target.files?.[0] || null)}
-        />
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-          disabled={loading}
-        >
-          {loading ? "Ekleniyor..." : "Yeni Post Ekle"}
-        </button>
-      </form>
-      {error && <div className="text-red-600 mb-4">{error}</div>}
-      <h2 className="text-xl font-semibold mb-2">Postlar</h2>
-      <ul className="space-y-2">
+      <div className="bg-white shadow-lg rounded-lg p-8 mb-8">
+        <form onSubmit={handleAddPost} className="space-y-4">
+          <input
+            className="border px-3 py-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="Başlık"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            required
+          />
+          <textarea
+            className="border px-3 py-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-400 min-h-[100px]"
+            placeholder="İçerik"
+            value={content}
+            onChange={e => setContent(e.target.value)}
+            required
+          />
+          <select
+            className="border px-3 py-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+            value={selectedCategory ?? ""}
+            onChange={e => setSelectedCategory(Number(e.target.value) || null)}
+            required
+          >
+            <option value="">Kategori Seç</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
+          <div>
+            <label className="block mb-1 font-medium">Etiketler (opsiyonel)</label>
+            <select
+              className="border px-3 py-2 w-full rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+              multiple
+              value={selectedTags.map(String)}
+              onChange={e => {
+                const options = Array.from(e.target.selectedOptions).map(opt => Number(opt.value));
+                setSelectedTags(options);
+              }}
+            >
+              {tags.map(tag => (
+                <option key={tag.id} value={tag.id}>{tag.name}</option>
+              ))}
+            </select>
+            <div className="text-xs text-gray-500 mt-1">Birden fazla etiket seçmek için Ctrl (veya Mac'te Cmd) tuşunu kullanabilirsin.</div>
+          </div>
+          <div>
+            <label className="block mb-1 font-medium">Kapak Görseli</label>
+            <input
+              type="file"
+              accept="image/*"
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              onChange={e => setImageFile(e.target.files?.[0] || null)}
+            />
+            {imageFile && <div className="mt-1 text-xs text-green-600">Seçilen dosya: {imageFile.name}</div>}
+          </div>
+          <div>
+            <label className="block mb-1 font-medium">Ek Medya (fotoğraf, video, dosya)</label>
+            <input
+              type="file"
+              multiple
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              onChange={e => setMediaFiles(e.target.files ? Array.from(e.target.files) : [])}
+            />
+            {mediaFiles.length > 0 && (
+              <ul className="mt-1 text-xs text-green-600 space-y-1">
+                {mediaFiles.map((file, i) => (
+                  <li key={i}>{file.name}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {error && <div className="text-red-600 font-medium bg-red-50 border border-red-200 rounded p-2">{error}</div>}
+          <button
+            type="submit"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded shadow transition"
+            disabled={loading}
+          >
+            {loading ? "Ekleniyor..." : "Yeni Post Ekle"}
+          </button>
+        </form>
+      </div>
+      <h2 className="text-xl font-bold mb-4">Postlar</h2>
+      {loading && <div>Yükleniyor...</div>}
+      {posts.length === 0 && !loading && <div>Henüz post yok.</div>}
+      <ul className="space-y-4">
         {posts.map(post => (
-          <li key={post.id} className="border p-3 flex justify-between items-center">
+          <li key={post.id} className="bg-gray-50 rounded p-4 flex justify-between items-center shadow-sm">
             <div>
-              <div className="font-bold">{post.title}</div>
-              <div className="text-gray-600 text-sm">{post.slug}</div>
+              <div className="font-semibold text-lg">{post.title}</div>
+              <div className="text-gray-600 text-sm line-clamp-2 max-w-md">{post.content}</div>
             </div>
             <button
-              className="bg-red-500 text-white px-3 py-1 rounded"
               onClick={() => handleDelete(post.id)}
+              className="text-red-500 hover:text-red-700 font-medium px-3 py-1 rounded border border-red-200 bg-red-50 hover:bg-red-100 transition"
               disabled={loading}
             >
               Sil
