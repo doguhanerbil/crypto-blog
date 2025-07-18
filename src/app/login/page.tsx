@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("");
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { login } = useAuth();
 
   const API_URL = process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337";
 
@@ -19,21 +21,33 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    
     try {
       const res = await fetch(`${API_URL}/api/auth/local`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier, password }),
       });
+      
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error?.message || "Giriş başarısız");
-      // JWT'yi localStorage'a kaydet
-      localStorage.setItem("strapi_jwt", data.jwt);
-      // Panel'e yönlendir
-      router.push("/panel");
+      
+      if (!res.ok) {
+        throw new Error(data.error?.message || "Giriş başarısız");
+      }
+      
+      // Yeni hook yapısı ile login yap
+      const loginSuccess = login(data.jwt, data.user);
+      
+      if (loginSuccess) {
+        // Panel'e yönlendir
+        router.push("/panel");
+      } else {
+        setError("Token geçersiz");
+      }
     } catch (err: any) {
       setError(err.message || "Giriş başarısız");
     }
+    
     setLoading(false);
   };
 
