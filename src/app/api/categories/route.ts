@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { categoryService } from '@/lib/database';
-import { withAPIRateLimit } from '@/middleware/rateLimit';
+import { getCategoriesWithPostCount, createCategory as createCategoryLib } from '@/lib/categories';
 
-// Tüm kategorileri getir (public)
-async function getCategories(request: NextRequest) {
+// Tüm kategorileri getir (public) - post sayıları ile birlikte
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const activeOnly = searchParams.get('active') !== 'false';
-
-    const categories = await categoryService.findAll(activeOnly);
-
-    return NextResponse.json(categories);
+    const categories = await getCategoriesWithPostCount();
+    return NextResponse.json({ categories });
   } catch (error) {
     console.error('Error fetching categories:', error);
     return NextResponse.json(
@@ -20,13 +15,12 @@ async function getCategories(request: NextRequest) {
   }
 }
 
-// Yeni kategori oluştur (admin only)
-async function createCategory(request: NextRequest) {
+// Yeni kategori oluştur (admin only, burada kontrol yok)
+export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, description, color, icon } = body;
+    const { name, description, color } = body;
 
-    // Validate required fields
     if (!name) {
       return NextResponse.json(
         { error: 'Name is required' },
@@ -47,12 +41,15 @@ async function createCategory(request: NextRequest) {
       slug,
       description,
       color,
-      icon,
-      isActive: true
     };
 
-    const category = await categoryService.create(categoryData);
-
+    const category = await createCategoryLib(categoryData);
+    if (!category) {
+      return NextResponse.json(
+        { error: 'Failed to create category' },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(category, { status: 201 });
   } catch (error) {
     console.error('Error creating category:', error);
@@ -61,8 +58,4 @@ async function createCategory(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-// Rate limiting uygula
-export const GET = withAPIRateLimit(getCategories);
-export const POST = withAPIRateLimit(createCategory); 
+} 

@@ -2,11 +2,18 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Bitcoin, Twitter, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { Twitter, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const footerLinks = {
     platform: [
@@ -38,17 +45,33 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-black">
+    <footer className="border-t border-gray-200/50 dark:border-gray-700/50 bg-white dark:bg-gray-900">
       <div className="max-w-4xl mx-auto px-4 py-12">
         {/* Main Footer */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="md:col-span-2">
-            <Link href="/" className="flex items-center space-x-2 mb-4">
-              <Bitcoin className="h-6 w-6 text-gray-900 dark:text-white" />
-              <span className="text-xl font-bold text-gray-900 dark:text-white">
-                Kripto Blog
-              </span>
+            <Link href="/" className="flex items-center mb-4">
+              {mounted && (
+                <>
+                  {/* Light mode logo */}
+                  <Image
+                    src="/bitget logo.png"
+                    alt="Bitget Logo"
+                    width={100}
+                    height={100}
+                    className="h-10 w-auto block dark:hidden"
+                  />
+                  {/* Dark mode logo */}
+                  <Image
+                    src="/bitget_logo_white.png"
+                    alt="Bitget Logo"
+                    width={100}
+                    height={100}
+                    className="h-10 w-auto hidden dark:block"
+                  />
+                </>
+              )}
             </Link>
             
             <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-sm">
@@ -107,33 +130,11 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Newsletter */}
-        <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-          <div className="max-w-md">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Güncel Kalın
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">
-              En son kripto haberleri için e-posta listemize katılın.
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="email"
-                placeholder="E-posta adresiniz"
-                className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-black text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <Button size="sm">
-                Abone Ol
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Bar */}
-        <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
+        {/* Bottom Footer */}
+        <div className="mt-8 pt-8 border-t border-gray-200/50 dark:border-gray-700/50">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              © {currentYear} Kripto Blog. Tüm hakları saklıdır.
+              © {currentYear} Bitget Blog. Tüm hakları saklıdır.
             </span>
             
             <div className="flex items-center space-x-6 text-sm">

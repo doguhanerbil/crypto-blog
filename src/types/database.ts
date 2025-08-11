@@ -1,87 +1,247 @@
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  password?: string;
-  role: 'ADMIN' | 'USER';
-  image?: string;
-  emailVerified?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
-export interface Post {
-  id: string;
-  title: string;
-  slug: string;
-  content: string;
-  excerpt: string;
-  status: 'DRAFT' | 'PUBLISHED';
-  type: 'ARTICLE' | 'ANALYSIS' | 'VIDEO' | 'CHART';
-  authorId: string;
-  featuredImage?: string;
-  media?: MediaItem[];
-  seo?: {
-    metaTitle?: string;
-    metaDescription?: string;
-    keywords?: string[];
-  };
-  publishedAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+export interface Database {
+  public: {
+    Tables: {
+      profiles: {
+        Row: {
+          id: string
+          name: string | null
+          email: string | null
+          avatar_url: string | null
+          bio: string | null
+          website: string | null
+          twitter: string | null
+          github: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          name?: string | null
+          email?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          website?: string | null
+          twitter?: string | null
+          github?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string | null
+          email?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          website?: string | null
+          twitter?: string | null
+          github?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      categories: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          description: string | null
+          color: string | null
+          icon: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          description?: string | null
+          color?: string | null
+          icon?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          description?: string | null
+          color?: string | null
+          icon?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      tags: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          description: string | null
+          color: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          description?: string | null
+          color?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          description?: string | null
+          color?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      posts: {
+        Row: {
+          id: string
+          title: string
+          slug: string
+          content: string
+          excerpt: string | null
+          status: 'draft' | 'published' | 'archived'
+          featured_image: string | null
+          featured_image_alt: string | null
+          meta_title: string | null
+          meta_description: string | null
+          view_count: number
+          read_time: number | null
+          is_featured: boolean
+          author_id: string | null
+          published_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          slug: string
+          content: string
+          excerpt?: string | null
+          status?: 'draft' | 'published' | 'archived'
+          featured_image?: string | null
+          featured_image_alt?: string | null
+          meta_title?: string | null
+          meta_description?: string | null
+          view_count?: number
+          read_time?: number | null
+          is_featured?: boolean
+          author_id?: string | null
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          slug?: string
+          content?: string
+          excerpt?: string | null
+          status?: 'draft' | 'published' | 'archived'
+          featured_image?: string | null
+          featured_image_alt?: string | null
+          meta_title?: string | null
+          meta_description?: string | null
+          view_count?: number
+          read_time?: number | null
+          is_featured?: boolean
+          author_id?: string | null
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      post_categories: {
+        Row: {
+          post_id: string
+          category_id: string
+        }
+        Insert: {
+          post_id: string
+          category_id: string
+        }
+        Update: {
+          post_id?: string
+          category_id?: string
+        }
+      }
+      post_tags: {
+        Row: {
+          post_id: string
+          tag_id: string
+        }
+        Insert: {
+          post_id: string
+          tag_id: string
+        }
+        Update: {
+          post_id?: string
+          tag_id?: string
+        }
+      }
+      contact_messages: {
+        Row: {
+          id: string
+          name: string
+          email: string
+          subject: string
+          message: string
+          is_read: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          email: string
+          subject: string
+          message: string
+          is_read?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          email?: string
+          subject?: string
+          message?: string
+          is_read?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+  }
 }
-
-export interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  color?: string;
-  icon?: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface Tag {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  color?: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface ContactMessage {
-  id: string;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  isRead: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface MediaItem {
-  id: number;
-  url: string;
-  type: 'IMAGE' | 'VIDEO' | 'FILE' | 'CHART';
-  altText?: string;
-  filename: string;
-  size: number;
-  order: number;
-}
-
-// Junction tables for many-to-many relationships
-export interface PostCategory {
-  postId: string;
-  categoryId: string;
-}
-
-export interface PostTag {
-  postId: string;
-  tagId: string;
-} 
