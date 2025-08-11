@@ -5,31 +5,38 @@ import { useState, useEffect } from 'react';
 type Theme = 'light' | 'dark';
 
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>('dark');
+  const [theme, setTheme] = useState<Theme>('light');
   const [mounted, setMounted] = useState(false);
 
+  // İlk yükleme
   useEffect(() => {
-    setMounted(true);
+    // Önce localStorage'dan kontrol et
     const savedTheme = localStorage.getItem('theme') as Theme;
-    if (savedTheme) {
+    
+    if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
       setTheme(savedTheme);
     } else {
-      // Varsayılan olarak dark mode
-      setTheme('dark');
+      // Sistem temasını kontrol et
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(isDark ? 'dark' : 'light');
     }
+    
+    setMounted(true);
   }, []);
 
+  // Tema değişikliği
   useEffect(() => {
-    if (mounted) {
-      const root = document.documentElement;
-      root.classList.remove('light', 'dark');
-      root.classList.add(theme);
-      localStorage.setItem('theme', theme);
-    }
+    if (!mounted) return;
+    
+    const root = document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(theme);
+    localStorage.setItem('theme', theme);
   }, [theme, mounted]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
   };
 
   return {

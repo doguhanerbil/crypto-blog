@@ -1,33 +1,40 @@
-import BlogList from '@/components/BlogList';
-import { getPosts } from '@/lib/strapi';
+import PostList from '@/components/blog/PostList'
+import Sidebar from '@/components/blog/Sidebar'
+import Breadcrumb from '@/components/layout/Breadcrumb'
 
-export default async function Home() {
-  const posts = await getPosts();
+export default async function HomePage() {
+  // API routes kullanarak veri çek - anasayfa için son 10 post
+  const postsRes = await fetch('http://localhost:3000/api/posts?homepage=true', { cache: 'no-store' })
+  const categoriesRes = await fetch('http://localhost:3000/api/categories', { cache: 'no-store' })
+  
+  const postsData = await postsRes.json()
+  const categoriesData = await categoriesRes.json()
 
-  // --- DEBUGGING LOG ---
-  console.log('--- Posts received in Home component ---');
-  console.log(`Number of posts: ${posts ? posts.length : 0}`);
-  if (posts && posts.length > 0) {
-    console.log('First post title:', posts[0].title);
-  }
-  console.log('------------------------------------');
+  const posts = postsData.posts || []
+  const categories = categoriesData.categories || []
 
   return (
-    <main className="min-h-screen bg-white dark:bg-black">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Medium-style header */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Kripto Blog
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <Breadcrumb />
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+            Son Yazılar
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400">
-            Kripto dünyasının en güncel haberleri ve analizleri
+          <p className="text-gray-600 dark:text-gray-400">
+            Kripto para ve blockchain dünyasından en güncel yazılar
           </p>
         </div>
         
-        {/* Blog posts in Medium style */}
-        <BlogList posts={posts} />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="lg:col-span-3">
+            <PostList posts={posts} />
+          </div>
+          <div className="lg:col-span-1">
+            <Sidebar categories={categories} />
+          </div>
+        </div>
       </div>
-    </main>
-  );
+    </div>
+  )
 }

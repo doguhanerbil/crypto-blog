@@ -247,3 +247,56 @@
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-transparent;
 }
+
+/* Sidebar Card Animations */
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes gradient-flow {
+  0% {
+    background: linear-gradient(45deg, #000000, #374151);
+  }
+  25% {
+    background: linear-gradient(45deg, #374151, #000000);
+  }
+  50% {
+    background: linear-gradient(45deg, #000000, #374151);
+  }
+  75% {
+    background: linear-gradient(45deg, #374151, #000000);
+  }
+  100% {
+    background: linear-gradient(45deg, #000000, #374151);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out forwards;
+}
+
+.animate-gradient-flow {
+  animation: gradient-flow 3s ease-in-out infinite;
+}

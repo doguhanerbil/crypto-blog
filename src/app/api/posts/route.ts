@@ -1,84 +1,97 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { postService } from '@/lib/database';
-import { withAPIRateLimit } from '@/middleware/rateLimit';
+import { NextRequest, NextResponse } from 'next/server'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 
-// Tüm blog yazılarını getir (public)
-async function getPosts(request: NextRequest) {
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const category = searchParams.get('category')
+  const limit = searchParams.get('limit')
+  const offset = searchParams.get('offset')
+  const isHomepage = searchParams.get('homepage') === 'true'
+  
+  console.log('API route called with SERVICE ROLE client')
+  console.log('Environment check:')
+  console.log('SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+  console.log('SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+  console.log('Category filter:', category)
+  console.log('Limit:', limit)
+  console.log('Offset:', offset)
+  console.log('Is homepage:', isHomepage)
+  
   try {
-    const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const status = searchParams.get('status') as 'DRAFT' | 'PUBLISHED' | undefined;
-    const type = searchParams.get('type') || undefined;
-    const categoryId = searchParams.get('categoryId') || undefined;
-    const tagId = searchParams.get('tagId') || undefined;
+    console.log('Attempting to fetch posts with SERVICE ROLE client...')
+    
+    let query = supabaseAdmin
+      .from('posts')
+      .select(`
+        *,
+        author:profiles(full_name, avatar_url),
+        categories:post_categories(category:categories(name, slug)),
+        tags:post_tags(tag:tags(name, slug))
+      `)
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
 
-    const posts = await postService.findAll({
-      page,
-      limit,
-      status,
-      type,
-      categoryId,
-      tagId
-    });
-
-    return NextResponse.json(posts);
-  } catch (error) {
-    console.error('Error fetching posts:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch posts' },
-      { status: 500 }
-    );
-  }
-}
-
-// Yeni blog yazısı oluştur (admin only)
-async function createPost(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { title, content, excerpt, type, categories, tags, featuredImage, media, seo } = body;
-
-    // Validate required fields
-    if (!title || !content || !excerpt || !type) {
-      return NextResponse.json(
-        { error: 'Title, content, excerpt, and type are required' },
-        { status: 400 }
-      );
+    // Anasayfa için son 10 post
+    if (isHomepage) {
+      query = query.limit(10)
+    }
+    // Limit ve offset parametreleri varsa uygula
+    else if (limit) {
+      query = query.limit(parseInt(limit))
+      if (offset) {
+        query = query.range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1)
+      }
     }
 
-    // Generate slug from title
-    const slug = title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
+    // Kategori filtresi varsa uygula
+    if (category) {
+      // Önce kategori ID'sini bul
+      const { data: categoryData, error: categoryError } = await supabaseAdmin
+        .from('categories')
+        .select('id')
+        .eq('slug', category)
+        .single()
 
-    const postData = {
-      title,
-      slug,
-      content,
-      excerpt,
-      type,
-      status: 'DRAFT' as const,
-      authorId: 'temp-author-id', // TODO: Get from session
-      featuredImage,
-      media,
-      seo
-    };
+      if (categoryError || !categoryData) {
+        console.error('Category not found:', categoryError)
+        return NextResponse.json({ posts: [] })
+      }
 
-    const post = await postService.create(postData);
+      // Kategoriye ait post ID'lerini bul
+      const { data: postCategories, error: postCategoriesError } = await supabaseAdmin
+        .from('post_categories')
+        .select('post_id')
+        .eq('category_id', categoryData.id)
 
-    return NextResponse.json(post, { status: 201 });
+      if (postCategoriesError) {
+        console.error('Error fetching post categories:', postCategoriesError)
+        return NextResponse.json({ posts: [] })
+      }
+
+      const postIds = postCategories.map(pc => pc.post_id)
+      
+      if (postIds.length > 0) {
+        query = query.in('id', postIds)
+      } else {
+        return NextResponse.json({ posts: [] })
+      }
+    }
+
+    const { data, error } = await query
+
+    console.log('Supabase SERVICE ROLE response:')
+    console.log('Data:', data)
+    console.log('Error:', error)
+    console.log('Data length:', data?.length)
+
+    if (error) {
+      console.error('Supabase SERVICE ROLE error:', error)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ posts: data || [] })
   } catch (error) {
-    console.error('Error creating post:', error);
-    return NextResponse.json(
-      { error: 'Failed to create post' },
-      { status: 500 }
-    );
+    console.error('Caught error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-}
-
-// Rate limiting uygula
-export const GET = withAPIRateLimit(getPosts);
-export const POST = withAPIRateLimit(createPost); 
+} 
