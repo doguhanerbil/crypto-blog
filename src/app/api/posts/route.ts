@@ -7,6 +7,9 @@ export async function GET(request: NextRequest) {
   const limit = searchParams.get('limit')
   const offset = searchParams.get('offset')
   const isHomepage = searchParams.get('homepage') === 'true'
+  const q = searchParams.get('q')
+  const start = searchParams.get('start')
+  const end = searchParams.get('end')
   
   console.log('API route called with SERVICE ROLE client')
   console.log('Environment check:')
@@ -75,6 +78,27 @@ export async function GET(request: NextRequest) {
       } else {
         return NextResponse.json({ posts: [] })
       }
+    }
+
+    // Başlık araması
+    if (q) {
+      query = query.ilike('title', `%${q}%`)
+    }
+
+    // Tarih aralığı
+    if (start) {
+      try {
+        const isoStart = new Date(start).toISOString()
+        query = query.gte('created_at', isoStart)
+      } catch {}
+    }
+    if (end) {
+      try {
+        // Gün sonu
+        const endDt = new Date(end)
+        endDt.setHours(23, 59, 59, 999)
+        query = query.lte('created_at', endDt.toISOString())
+      } catch {}
     }
 
     const { data, error } = await query

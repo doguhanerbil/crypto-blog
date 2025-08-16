@@ -47,12 +47,20 @@ export default function LiveCryptoData() {
           }
         ];
         setCryptoData(formattedData);
-      } catch (err: any) {
-        setError(err.message || 'Veri alınamadı');
+        setError(null);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Veri alınamadı';
+        setError(message);
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     }
     fetchCryptoData();
+    const interval = setInterval(() => {
+      fetchCryptoData();
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const formatPrice = (price: number) => {

@@ -56,7 +56,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-300/50 backdrop-blur-2xl bg-transparent backdrop:blur-2xl">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto">
         <div className="flex h-16 items-center">
           {/* Logo - Sol taraf */}
           <div className="w-32 flex-shrink-0">

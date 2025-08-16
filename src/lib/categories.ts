@@ -109,49 +109,22 @@ export async function getAllCategories() {
   }
 }
 
-export async function createCategory(categoryData: {
-  name: string
-  slug: string
-  description?: string
-}) {
+export async function createCategory(categoryData: { name: string; slug?: string; description?: string }) {
   try {
-    const { data, error } = await supabase
-      .from('categories')
-      .insert(categoryData)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error creating category:', error)
-      return null
-    }
-
-    return data
+    const res = await fetch('/api/admin/categories', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: categoryData.name, description: categoryData.description }) })
+    if (!res.ok) return null
+    return await res.json()
   } catch (error) {
     console.error('Error creating category:', error)
     return null
   }
 }
 
-export async function updateCategory(id: string, categoryData: {
-  name?: string
-  slug?: string
-  description?: string
-}) {
+export async function updateCategory(id: string, categoryData: { name?: string; description?: string }) {
   try {
-    const { data, error } = await supabase
-      .from('categories')
-      .update(categoryData)
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error updating category:', error)
-      return null
-    }
-
-    return data
+    const res = await fetch(`/api/admin/categories/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(categoryData) })
+    if (!res.ok) return null
+    return await res.json()
   } catch (error) {
     console.error('Error updating category:', error)
     return null
@@ -160,17 +133,10 @@ export async function updateCategory(id: string, categoryData: {
 
 export async function deleteCategory(id: string) {
   try {
-    const { error } = await supabase
-      .from('categories')
-      .delete()
-      .eq('id', id)
-
-    if (error) {
-      console.error('Error deleting category:', error)
-      return false
-    }
-
-    return true
+    const res = await fetch(`/api/admin/categories/${id}`, { method: 'DELETE' })
+    if (!res.ok) return false
+    const data = await res.json()
+    return !!data?.ok
   } catch (error) {
     console.error('Error deleting category:', error)
     return false

@@ -15,7 +15,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto py-8">
         <Breadcrumb />
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
@@ -26,7 +26,7 @@ export default async function HomePage() {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-20">
           <div className="lg:col-span-3">
             <PostList posts={posts} />
           </div>

@@ -132,7 +132,7 @@ export default function SearchResults({ query }: { query: string }) {
                 {post.categories && post.categories.map((categoryItem) => (
                   <span
                     key={categoryItem.category.slug}
-                    className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full"
+                    className="px-2 py-1 text-xs rounded-full bg-[#2e5dfc] text-white"
                   >
                     {categoryItem.category.name}
                   </span>

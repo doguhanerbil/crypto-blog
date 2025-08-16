@@ -5,6 +5,7 @@ import { SITE_CONFIG, SEO } from '@/lib/constants'
 import { Toaster } from '@/components/ui/toaster'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
+import BfCacheRefresh from './BfCacheRefresh'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -83,6 +84,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <div className="min-h-screen flex flex-col">
+          <BfCacheRefresh />
           <Header />
           <main className="flex-1">
             {children}

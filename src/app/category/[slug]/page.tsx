@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 import { notFound } from 'next/navigation'
 import { getPostsByCategory } from '@/lib/posts'
 import { getCategoryBySlug, getCategoriesWithPostCount } from '@/lib/categories'

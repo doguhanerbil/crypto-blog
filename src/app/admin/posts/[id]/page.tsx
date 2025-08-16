@@ -7,13 +7,14 @@ import Image from 'next/image'
 import Breadcrumb from '@/components/layout/Breadcrumb'
 
 interface PostViewPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default async function PostViewPage({ params }: PostViewPageProps) {
-  const post = await getPostById(params.id)
+  const { id } = await params
+  const post = await getPostById(id)
 
   if (!post) {
     notFound()
@@ -32,7 +33,7 @@ export default async function PostViewPage({ params }: PostViewPageProps) {
           </p>
         </div>
         <Button asChild>
-          <a href={`/admin/posts/${params.id}/edit`}>Düzenle</a>
+          <a href={`/admin/posts/${id}/edit`}>Düzenle</a>
         </Button>
       </div>
 
@@ -51,17 +52,17 @@ export default async function PostViewPage({ params }: PostViewPageProps) {
           </div>
 
           <div>
+            {post.cover_image_url ? (
+              <Image src={post.cover_image_url} alt={post.title} width={1200} height={600} className="w-full h-auto rounded" />
+            ) : null}
+          </div>
+          <div>
             <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
               İçerik
             </h3>
             <div className="prose prose-lg dark:prose-invert max-w-none">
               <div dangerouslySetInnerHTML={{ __html: post.content }} />
             </div>
-          </div>
-          <div>
-            {post.cover_image_url ? (
-              <Image src={post.cover_image_url} alt={post.title} width={1000} height={1000} />
-            ) : <>asdadasadad</>}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
             <div>

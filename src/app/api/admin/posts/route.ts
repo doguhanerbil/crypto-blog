@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { title, content, excerpt, cover_image_url } = await request.json()
+    const { title, content, content_paragraphs, excerpt, cover_image_url, category_id, category_ids } = await request.json()
 
     if (!title || !content) {
       return NextResponse.json(
@@ -64,6 +64,29 @@ export async function POST(request: NextRequest) {
     if (postError) {
       return NextResponse.json({ message: postError.message }, { status: 400 })
     }
+
+    // 2. Kategori ilişkisinin eklenmesi (tek ya da çoklu)
+    const incomingCategoryIds: string[] = Array.isArray(category_ids)
+      ? category_ids
+      : category_id
+        ? [category_id]
+        : []
+
+    if (incomingCategoryIds.length > 0) {
+      const rows = incomingCategoryIds.map((cid) => ({ post_id: post.id, category_id: cid }))
+      const { error: pivotError } = await supabaseAdmin
+        .from('post_categories')
+        .insert(rows)
+      if (pivotError) {
+        // İlişki ekleme hatası olsa bile post oluşturulmuş durumda; yine de hata döndürelim
+        return NextResponse.json({ message: pivotError.message }, { status: 400 })
+      }
+    }
+
+    // 3. İçerik paragrafları gönderildiyse, legacy content ile uyumlu şekilde post_media benzeri alt tablo yerine JSON kolon önermiyoruz.
+    // Şimdilik herhangi bir tablo değişikliği yapmadan, paragrafları birleştirip kaydediyoruz.
+    // İleride JSONB kolon eklendiğinde buraya insert/update eklenebilir.
+
     return NextResponse.json(post, { status: 201 })
   } catch (error) {
     console.log('DEBUG: Genel hata:', error)

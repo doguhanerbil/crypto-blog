@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import RichTextEditor from '@/components/admin/RichTextEditor'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Image as ImageIcon, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { createClient } from '@supabase/supabase-js';
 import Breadcrumb from '@/components/layout/Breadcrumb'
@@ -16,23 +18,25 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+type CategoryOption = { id: string; name: string }
+
 export default function NewPostPage() {
   const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
+  const [content, setContent] = useState<string>('')
   const [excerpt, setExcerpt] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null)
   const [coverImageUrl, setCoverImageUrl] = useState('')
-  const [categories, setCategories] = useState([])
+  const [categories, setCategories] = useState<CategoryOption[]>([])
   const [selectedCategory, setSelectedCategory] = useState('')
 
   useEffect(() => {
     // Kategorileri backend'den çek
     fetch('/api/categories')
       .then(res => res.json())
-      .then(data => setCategories(data.categories || []))
+      .then((data: { categories?: CategoryOption[] }) => setCategories(data.categories || []))
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,12 +44,13 @@ export default function NewPostPage() {
     setLoading(true);
     let uploadedUrl = coverImageUrl;
     if (coverImageFile) {
-      const filePath = `post-media/images/${Date.now()}_${coverImageFile.name}`;
-      const { data, error } = await supabase.storage
+      // Store cover images under bucket: post-media, folder: images/
+      const filePath = `images/${Date.now()}_${coverImageFile.name}`;
+      const { error: uploadError } = await supabase.storage
         .from('post-media')
         .upload(filePath, coverImageFile, { upsert: true });
-      if (error) {
-        alert('Yükleme hatası: ' + error.message);
+      if (uploadError) {
+        alert('Yükleme hatası: ' + uploadError.message);
         setLoading(false);
         return;
       }
@@ -53,13 +58,17 @@ export default function NewPostPage() {
       uploadedUrl = urlData.publicUrl;
       setCoverImageUrl(uploadedUrl);
     }
+    const legacyContent = (content || '').trim()
+    const cleanedParagraphs = legacyContent ? [legacyContent] : []
+
     // Post kaydını yap
     const response = await fetch('/api/admin/posts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title,
-        content,
+        content: legacyContent,
+        content_paragraphs: cleanedParagraphs,
         excerpt,
         cover_image_url: uploadedUrl,
         category_id: selectedCategory,
@@ -121,28 +130,43 @@ export default function NewPostPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="content">İçerik</Label>
-              <Textarea
-                id="content"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                required
-                placeholder="Yazı içeriği"
-                rows={15}
-              />
+              <Label>İçerik</Label>
+              <RichTextEditor value={content} onChange={setContent} />
             </div>
 
             <div className="space-y-2">
-              <Label>Kapak Resmi Seç</Label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleCoverImageChange}
-                disabled={loading}
-              />
-              {coverImageFile && (
-                <img src={URL.createObjectURL(coverImageFile)} alt="Önizleme" style={{ width: 200, marginTop: 8 }} />
-              )}
+              <Label>Kapak Resmi</Label>
+              <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 p-4">
+                <label htmlFor="coverImage" className="flex cursor-pointer items-center justify-center gap-3 rounded-md bg-gray-50 dark:bg-gray-800/40 px-4 py-3 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
+                  <ImageIcon className="h-5 w-5" />
+                  <span>Görsel yüklemek için tıklayın</span>
+                </label>
+                <input id="coverImage" type="file" accept="image/*" onChange={handleCoverImageChange} disabled={loading} className="hidden" />
+
+                {(coverImageFile || coverImageUrl) && (
+                  <div className="mt-3 flex items-center gap-3">
+                    <div className="relative h-20 w-32 overflow-hidden rounded-md border">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={coverImageFile ? URL.createObjectURL(coverImageFile) : coverImageUrl}
+                        alt="Kapak önizleme"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => {
+                        setCoverImageFile(null)
+                        setCoverImageUrl('')
+                      }}
+                    >
+                      <X className="mr-2 h-4 w-4" /> Görseli kaldır
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -155,7 +179,7 @@ export default function NewPostPage() {
                 required
               >
                 <option value="">Kategori seçiniz</option>
-                {categories.map((cat: any) => (
+                {categories.map((cat: CategoryOption) => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
